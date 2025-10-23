@@ -6,6 +6,7 @@ const menu = [
   { label: 'Stock', icon: 'pi pi-sort-amount-up', to: '/stock' },
   { label: 'Categorías', icon: 'pi pi-tags', to: '/categorias' },
   { label: 'Proveedores', icon: 'pi pi-briefcase', to: '/proveedores' },
+  { label: 'Usuarios', icon: 'pi pi-users', to: '/usuarios' },
   { label: 'Reportes', icon: 'pi pi-file', to: '/reportes' },
   { label: 'Configuración', icon: 'pi pi-cog', to: '/configuracion' },
 ]

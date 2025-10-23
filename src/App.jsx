@@ -6,6 +6,7 @@
  import Stock from './pages/Stock'
  import Categorias from './pages/Categorias'
  import Proveedores from './pages/Proveedores'
+ import Usuarios from './pages/Usuarios'
  import Reportes from './pages/Reportes'
  import Configuracion from './pages/Configuracion'
  import AppLayout from './layout/AppLayout'
@@ -29,6 +30,7 @@ function App() {
           <Route path="stock" element={<Stock />} />
           <Route path="categorias" element={<Categorias />} />
           <Route path="proveedores" element={<Proveedores />} />
+          <Route path="usuarios" element={<Usuarios />} />
           <Route path="reportes" element={<Reportes />} />
           <Route path="configuracion" element={<Configuracion />} />
         </Route>
