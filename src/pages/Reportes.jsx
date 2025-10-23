@@ -7,6 +7,7 @@ import { Button } from 'primereact/button'
 import { Toast } from 'primereact/toast'
 import { listMovements } from '../services/stock'
 import { listProducts } from '../services/products'
+import { listInvoices } from '../services/invoices'
 
 function formatCOP(n) {
   return new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(Number(n || 0))
@@ -17,16 +18,26 @@ export default function Reportes() {
   const [loading, setLoading] = useState(true)
   const [rows, setRows] = useState([])
   const [products, setProducts] = useState([])
-  const [filters, setFilters] = useState({ productId: '', saleType: 'all', seller: '', range: null })
+  const [filters, setFilters] = useState({ productId: '', saleType: 'all', seller: '', customer: '', range: null })
 
   const load = async () => {
     try {
       setLoading(true)
-      const [movs, prods] = await Promise.all([listMovements(), listProducts()])
+      const [movs, prods, invs] = await Promise.all([listMovements(), listProducts(), listInvoices()])
       setProducts(prods)
-      // solo ventas
+      // solo ventas (y enriquecer con cliente desde factura)
       const existing = new Set(prods.map((p) => p.id))
-      const sales = movs.filter((m) => m.type === 'out' && existing.has(m.productId))
+      const invMap = new Map(invs.map((i) => [i.id, i]))
+      const sales = movs
+        .filter((m) => m.type === 'out' && existing.has(m.productId))
+        .map((m) => {
+          const inv = m.invoiceId ? invMap.get(m.invoiceId) : null
+          return {
+            ...m,
+            customerDocId: inv?.customerDocId || '',
+            customerName: inv?.customerName || '',
+          }
+        })
       setRows(sales)
     } catch (e) {
       toast.current?.show({ severity: 'error', summary: 'Error', detail: e?.message || 'No se pudieron cargar los datos' })
@@ -44,6 +55,14 @@ export default function Reportes() {
     const set = new Set(rows.filter((r) => r.type === 'out' && r.userEmail).map((r) => r.userEmail))
     return [{ label: 'Todos', value: '' }, ...Array.from(set).map((e) => ({ label: e, value: e }))]
   }, [rows])
+  const customerOptions = useMemo(() => {
+    const set = new Map()
+    for (const r of rows) {
+      if (r.customerDocId && r.customerName && !set.has(r.customerDocId)) set.set(r.customerDocId, r.customerName)
+    }
+    const arr = Array.from(set.entries()).map(([id, name]) => ({ label: name, value: id }))
+    return [{ label: 'Todos', value: '' }, ...arr]
+  }, [rows])
   const saleTypeOptions = [
     { label: 'Todos', value: 'all' },
     { label: 'Detal', value: 'detal' },
@@ -56,14 +75,16 @@ export default function Reportes() {
     const productId = (filters.productId ?? '').toString()
     const saleType = (filters.saleType ?? 'all').toString()
     const seller = (filters.seller ?? '').toString()
+    const customer = (filters.customer ?? '').toString()
 
     // camino rápido: todo seleccionado y sin rango => devolver filas completas
-    if (!productId && saleType === 'all' && !seller && !(start || end)) return rows
+    if (!productId && saleType === 'all' && !seller && !customer && !(start || end)) return rows
 
     return rows.filter((r) => {
       if (productId && String(r.productId) !== productId) return false
       if (saleType !== 'all' && String(r.saleType) !== saleType) return false
       if (seller && String(r.userEmail || '') !== seller) return false
+      if (customer && String(r.customerDocId || '') !== customer) return false
       if (start || end) {
         const ts = r.createdAt?.seconds ? r.createdAt.seconds * 1000 : Number(r.createdAt || 0)
         const startMs = start ? new Date(start.getTime()).setHours(0, 0, 0, 0) : null
@@ -83,8 +104,24 @@ export default function Reportes() {
     return { count: filtered.length, units, total, detal, mayor }
   }, [filtered])
 
+  const costMap = useMemo(() => new Map(products.map((p) => [p.id, Number(p.cost || 0)])), [products])
+  const profitSummary = useMemo(() => {
+    const revenue = filtered.reduce((a, r) => a + Number(r.total || 0), 0)
+    const estimatedCost = filtered.reduce((a, r) => a + Number(r.units || 0) * (costMap.get(r.productId) || 0), 0)
+    const profit = revenue - estimatedCost
+    return { revenue, estimatedCost, profit }
+  }, [filtered, costMap])
+
+  const setCurrentMonth = () => {
+    const now = new Date()
+    const start = new Date(now.getFullYear(), now.getMonth(), 1)
+    const end = new Date(now.getFullYear(), now.getMonth() + 1, 0)
+    end.setHours(23, 59, 59, 999)
+    setFilters((s) => ({ ...s, range: [start, end] }))
+  }
+
   const exportCSV = () => {
-    const header = ['Fecha', 'Producto', 'Venta', 'Unidades', 'Precio', 'Total', 'Vendedor']
+    const header = ['Fecha', 'Producto', 'Venta', 'Unidades', 'Precio', 'Total', 'Vendedor', 'Cliente']
     const lines = filtered.map((r) => {
       const dt = r.createdAt?.seconds ? new Date(r.createdAt.seconds * 1000) : new Date(Number(r.createdAt || Date.now()))
       const fecha = dt.toLocaleDateString('es-CO') + ' ' + dt.toLocaleTimeString('es-CO')
@@ -96,6 +133,7 @@ export default function Reportes() {
         Number(r.priceAtSale || 0),
         Number(r.total || 0),
         r.userEmail || '',
+        r.customerName || '',
       ]
         .map((x) => (typeof x === 'string' ? `"${x.replace(/"/g, '""')}"` : x))
         .join(',')
@@ -123,6 +161,7 @@ export default function Reportes() {
           <td style="text-align:right;">${formatCOP(r.priceAtSale)}</td>
           <td style="text-align:right;">${formatCOP(r.total)}</td>
           <td>${r.userEmail || ''}</td>
+          <td>${r.customerName || ''}</td>
         </tr>`
       })
       .join('')
@@ -143,7 +182,7 @@ export default function Reportes() {
       <div style="margin-bottom:10px;">Registros: ${totals.count} &nbsp; · &nbsp; Unidades: ${totals.units} &nbsp; · &nbsp; Total: ${formatCOP(totals.total)} (Detal: ${formatCOP(totals.detal)} · Mayor: ${formatCOP(totals.mayor)})</div>
       <table>
         <thead>
-          <tr><th>Fecha</th><th>Producto</th><th>Venta</th><th>Unidades</th><th>Precio</th><th>Total</th><th>Vendedor</th></tr>
+          <tr><th>Fecha</th><th>Producto</th><th>Venta</th><th>Unidades</th><th>Precio</th><th>Total</th><th>Vendedor</th><th>Cliente</th></tr>
         </thead>
         <tbody>
           ${rowsHtml}
@@ -173,18 +212,32 @@ export default function Reportes() {
           <label className="text-sm">Vendedor</label>
           <Dropdown value={filters.seller} options={sellerOptions} onChange={(e) => setFilters((s) => ({ ...s, seller: e.value ?? '' }))} placeholder="Todos" filter showClear />
         </div>
+        <div className="col-12 md:col-4">
+          <label className="text-sm">Cliente</label>
+          <Dropdown value={filters.customer} options={customerOptions} onChange={(e) => setFilters((s) => ({ ...s, customer: e.value ?? '' }))} placeholder="Todos" filter showClear />
+        </div>
         <div className="col-12 md:col-5">
           <label className="text-sm">Rango de fechas</label>
           <Calendar value={filters.range} onChange={(e) => setFilters((s) => ({ ...s, range: e.value }))} selectionMode="range" readOnlyInput className="w-full" placeholder="Selecciona rango" showIcon dateFormat="dd/mm/yy" />
         </div>
         <div className="col-12 md:col-2">
-          <Button type="button" label="Limpiar filtros" icon="pi pi-filter-slash" onClick={() => setFilters({ productId: '', saleType: 'all', seller: '', range: null })} outlined className="w-full md:w-auto" />
+          <Button type="button" label="Limpiar filtros" icon="pi pi-filter-slash" onClick={() => setFilters({ productId: '', saleType: 'all', seller: '', customer: '', range: null })} outlined className="w-full md:w-auto" />
         </div>
       </div>
 
       <div className="flex gap-2 mb-3">
+        <Button label="Mes actual" icon="pi pi-calendar" onClick={setCurrentMonth} outlined />
         <Button label="Exportar CSV" icon="pi pi-download" onClick={exportCSV} outlined />
         <Button label="Exportar PDF" icon="pi pi-file-pdf" onClick={printPDF} />
+      </div>
+
+      <div className="card p-3 mb-3">
+        <div className="text-600 mb-2">Ganancias (rango seleccionado) · estimado</div>
+        <div className="flex flex-wrap gap-4">
+          <div>Ingresos: <strong>{formatCOP(profitSummary.revenue)}</strong></div>
+          <div>Costo estimado: <strong>{formatCOP(profitSummary.estimatedCost)}</strong></div>
+          <div>Ganancia: <strong>{formatCOP(profitSummary.profit)}</strong></div>
+        </div>
       </div>
 
       <DataTable value={filtered} loading={loading} paginator rows={10} emptyMessage="Sin datos" size="small">
@@ -194,6 +247,7 @@ export default function Reportes() {
         <Column field="priceAtSale" header="Precio" body={(r) => formatCOP(r.priceAtSale)} sortable />
         <Column field="total" header="Total" body={(r) => formatCOP(r.total)} sortable />
         <Column field="userEmail" header="Vendedor" sortable />
+        <Column field="customerName" header="Cliente" sortable />
         <Column
           field="createdAt"
           header="Fecha"

@@ -18,6 +18,7 @@ export async function createInvoice(data) {
     customerName: data.customerName || '',
     customerId: data.customerId || '',
     customerEmail: data.customerEmail || '',
+    customerDocId: data.customerDocId || null,
     number: typeof data.number === 'number' ? data.number : null,
     items: Array.isArray(data.items) ? data.items : [],
     subtotal: Number(data.subtotal || 0),

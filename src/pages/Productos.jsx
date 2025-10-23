@@ -47,6 +47,22 @@ export default function Productos() {
     }
   };
 
+  const duplicateProduct = (row) => {
+    // Crear una copia para partir de un producto similar (p.ej. cambiar solo color o precio)
+    const rest = { ...row }
+    delete rest.id
+    delete rest.quantity
+    const copy = {
+      ...rest,
+      id: null,
+      name: `${row.name} (copia)`,
+      quantity: 0,
+    }
+    setEditing({ ...emptyProduct, ...copy })
+    setImageFile(null)
+    setDialogVisible(true)
+  }
+
   useEffect(() => {
     load();
     // cargar proveedores y categorías para los selectores
@@ -183,6 +199,7 @@ export default function Productos() {
 
   const actionsBody = (row) => (
     <div className="flex gap-2">
+      <Button icon="pi pi-copy" rounded text severity="help" onClick={() => duplicateProduct(row)} />
       <Button icon="pi pi-pencil" rounded text onClick={() => openEdit(row)} />
       <Button icon="pi pi-trash" rounded text severity="danger" onClick={() => onDelete(row)} />
     </div>

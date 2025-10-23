@@ -8,6 +8,7 @@
  import Proveedores from './pages/Proveedores'
  import Usuarios from './pages/Usuarios'
 import Facturacion from './pages/Facturacion'
+import Clientes from './pages/Clientes'
  import Reportes from './pages/Reportes'
  import Configuracion from './pages/Configuracion'
  import AppLayout from './layout/AppLayout'
@@ -58,6 +59,14 @@ function App() {
             element={
               <RoleRoute allow={['admin']}>
                 <Usuarios />
+              </RoleRoute>
+            }
+          />
+          <Route
+            path="clientes"
+            element={
+              <RoleRoute allow={['admin']}>
+                <Clientes />
               </RoleRoute>
             }
           />
