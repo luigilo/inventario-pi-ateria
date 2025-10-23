@@ -34,8 +34,8 @@
       setLoading(true)
       const data = await listProducts()
       setItems(data)
-    } catch {
-      toast.current?.show({ severity: 'error', summary: 'Error', detail: 'No se pudo cargar productos' })
+    } catch (err) {
+      toast.current?.show({ severity: 'error', summary: 'Error', detail: err?.message || 'No se pudo cargar productos' })
     } finally {
       setLoading(false)
     }
@@ -70,8 +70,8 @@
           await deleteProduct(row.id)
           setItems((prev) => prev.filter((p) => p.id !== row.id))
           toast.current?.show({ severity: 'success', summary: 'Eliminado', detail: 'Producto eliminado' })
-        } catch {
-          toast.current?.show({ severity: 'error', summary: 'Error', detail: 'No se pudo eliminar' })
+        } catch (err) {
+          toast.current?.show({ severity: 'error', summary: 'Error', detail: err?.message || 'No se pudo eliminar' })
         }
       },
     })
@@ -91,8 +91,8 @@
           try {
             const url = await uploadProductImage(imageFile, editing.id)
             next.imageUrl = url
-          } catch {
-            toast.current?.show({ severity: 'warn', summary: 'Imagen', detail: 'No se pudo subir la imagen. Se guarda sin cambios de imagen.' })
+          } catch (err) {
+            toast.current?.show({ severity: 'warn', summary: 'Imagen', detail: err?.message || 'No se pudo subir la imagen. Se guarda sin cambios de imagen.' })
           }
         }
         await updateProduct(editing.id, { ...next })
@@ -111,16 +111,16 @@
             const url = await uploadProductImage(imageFile, id)
             await updateProduct(id, { imageUrl: url })
             final.imageUrl = url
-          } catch {
-            toast.current?.show({ severity: 'warn', summary: 'Imagen', detail: 'Producto creado, pero la imagen no se pudo subir.' })
+          } catch (err) {
+            toast.current?.show({ severity: 'warn', summary: 'Imagen', detail: err?.message || 'Producto creado, pero la imagen no se pudo subir.' })
           }
         }
         setItems((prev) => [final, ...prev])
         toast.current?.show({ severity: 'success', summary: 'Creado', detail: 'Producto creado' })
       }
       setDialogVisible(false)
-    } catch {
-      toast.current?.show({ severity: 'error', summary: 'Error', detail: 'No se pudo guardar' })
+    } catch (err) {
+      toast.current?.show({ severity: 'error', summary: 'Error', detail: err?.message || 'No se pudo guardar' })
     } finally {
       setSaving(false)
     }

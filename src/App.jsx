@@ -8,75 +8,35 @@
  import Proveedores from './pages/Proveedores'
  import Reportes from './pages/Reportes'
  import Configuracion from './pages/Configuracion'
- import './App.css'
+ import AppLayout from './layout/AppLayout'
 
- function App() {
-   return (
-     <div className="min-h-screen">
-       <Routes>
-         <Route path="/login" element={<Login />} />
+function App() {
+  return (
+    <div className="min-h-screen">
+      <Routes>
+        <Route path="/login" element={<Login />} />
 
-         <Route
-           path="/"
-           element={
-             <ProtectedRoute>
-               <Dashboard />
-             </ProtectedRoute>
-           }
-         />
+        <Route
+          path="/"
+          element={
+            <ProtectedRoute>
+              <AppLayout />
+            </ProtectedRoute>
+          }
+        >
+          <Route index element={<Dashboard />} />
+          <Route path="productos" element={<Productos />} />
+          <Route path="stock" element={<Stock />} />
+          <Route path="categorias" element={<Categorias />} />
+          <Route path="proveedores" element={<Proveedores />} />
+          <Route path="reportes" element={<Reportes />} />
+          <Route path="configuracion" element={<Configuracion />} />
+        </Route>
 
-         <Route
-           path="/productos"
-           element={
-             <ProtectedRoute>
-               <Productos />
-             </ProtectedRoute>
-           }
-         />
-         <Route
-           path="/stock"
-           element={
-             <ProtectedRoute>
-               <Stock />
-             </ProtectedRoute>
-           }
-         />
-         <Route
-           path="/categorias"
-           element={
-             <ProtectedRoute>
-               <Categorias />
-             </ProtectedRoute>
-           }
-         />
-         <Route
-           path="/proveedores"
-           element={
-             <ProtectedRoute>
-               <Proveedores />
-             </ProtectedRoute>
-           }
-         />
-         <Route
-           path="/reportes"
-           element={
-             <ProtectedRoute>
-               <Reportes />
-             </ProtectedRoute>
-           }
-         />
-         <Route
-           path="/configuracion"
-           element={
-             <ProtectedRoute>
-               <Configuracion />
-             </ProtectedRoute>
-           }
-         />
-         <Route path="*" element={<div className="p-3">No encontrado. <Link to="/">Ir al inicio</Link></div>} />
-       </Routes>
-     </div>
-   )
- }
+        <Route path="*" element={<div className="p-3">No encontrado. <Link to="/">Ir al inicio</Link></div>} />
+      </Routes>
+    </div>
+  )
+}
 
- export default App
+export default App
