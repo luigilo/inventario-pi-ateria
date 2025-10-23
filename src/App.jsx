@@ -7,9 +7,11 @@
  import Categorias from './pages/Categorias'
  import Proveedores from './pages/Proveedores'
  import Usuarios from './pages/Usuarios'
+import Facturacion from './pages/Facturacion'
  import Reportes from './pages/Reportes'
  import Configuracion from './pages/Configuracion'
  import AppLayout from './layout/AppLayout'
+ import RoleRoute from './components/RoleRoute'
 
 function App() {
   return (
@@ -26,13 +28,63 @@ function App() {
           }
         >
           <Route index element={<Dashboard />} />
-          <Route path="productos" element={<Productos />} />
+          <Route
+            path="productos"
+            element={
+              <RoleRoute allow={['admin']}>
+                <Productos />
+              </RoleRoute>
+            }
+          />
           <Route path="stock" element={<Stock />} />
-          <Route path="categorias" element={<Categorias />} />
-          <Route path="proveedores" element={<Proveedores />} />
-          <Route path="usuarios" element={<Usuarios />} />
-          <Route path="reportes" element={<Reportes />} />
-          <Route path="configuracion" element={<Configuracion />} />
+          <Route
+            path="categorias"
+            element={
+              <RoleRoute allow={['admin']}>
+                <Categorias />
+              </RoleRoute>
+            }
+          />
+          <Route
+            path="proveedores"
+            element={
+              <RoleRoute allow={['admin']}>
+                <Proveedores />
+              </RoleRoute>
+            }
+          />
+          <Route
+            path="usuarios"
+            element={
+              <RoleRoute allow={['admin']}>
+                <Usuarios />
+              </RoleRoute>
+            }
+          />
+          <Route
+            path="facturacion"
+            element={
+              <RoleRoute allow={['admin','vendedor']}>
+                <Facturacion />
+              </RoleRoute>
+            }
+          />
+          <Route
+            path="reportes"
+            element={
+              <RoleRoute allow={['admin']}>
+                <Reportes />
+              </RoleRoute>
+            }
+          />
+          <Route
+            path="configuracion"
+            element={
+              <RoleRoute allow={['admin']}>
+                <Configuracion />
+              </RoleRoute>
+            }
+          />
         </Route>
 
         <Route path="*" element={<div className="p-3">No encontrado. <Link to="/">Ir al inicio</Link></div>} />

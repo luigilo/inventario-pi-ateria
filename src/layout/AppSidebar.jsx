@@ -1,18 +1,22 @@
 import { Link, useLocation } from 'react-router-dom'
+import { useAuth } from '../context/AuthContext'
 
-const menu = [
-  { label: 'Dashboard', icon: 'pi pi-home', to: '/' },
-  { label: 'Productos', icon: 'pi pi-box', to: '/productos' },
-  { label: 'Stock', icon: 'pi pi-sort-amount-up', to: '/stock' },
-  { label: 'Categorías', icon: 'pi pi-tags', to: '/categorias' },
-  { label: 'Proveedores', icon: 'pi pi-briefcase', to: '/proveedores' },
-  { label: 'Usuarios', icon: 'pi pi-users', to: '/usuarios' },
-  { label: 'Reportes', icon: 'pi pi-file', to: '/reportes' },
-  { label: 'Configuración', icon: 'pi pi-cog', to: '/configuracion' },
+const rawMenu = [
+  { label: 'Dashboard', icon: 'pi pi-home', to: '/', roles: ['admin', 'vendedor'] },
+  { label: 'Productos', icon: 'pi pi-box', to: '/productos', roles: ['admin'] },
+  { label: 'Stock', icon: 'pi pi-sort-amount-up', to: '/stock', roles: ['admin', 'vendedor'] },
+  { label: 'Facturación', icon: 'pi pi-credit-card', to: '/facturacion', roles: ['admin', 'vendedor'] },
+  { label: 'Categorías', icon: 'pi pi-tags', to: '/categorias', roles: ['admin'] },
+  { label: 'Proveedores', icon: 'pi pi-briefcase', to: '/proveedores', roles: ['admin'] },
+  { label: 'Usuarios', icon: 'pi pi-users', to: '/usuarios', roles: ['admin'] },
+  { label: 'Reportes', icon: 'pi pi-file', to: '/reportes', roles: ['admin'] },
+  { label: 'Configuración', icon: 'pi pi-cog', to: '/configuracion', roles: ['admin'] },
 ]
 
 export default function AppSidebar({ visible, onHide }) {
   const location = useLocation()
+  const { role } = useAuth()
+  const menu = rawMenu.filter((item) => !item.roles || item.roles.includes(role))
   const active = (path) => (location.pathname === path ? 'active-route' : '')
 
   return (

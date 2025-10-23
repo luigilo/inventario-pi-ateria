@@ -25,7 +25,8 @@ export default function Reportes() {
       const [movs, prods] = await Promise.all([listMovements(), listProducts()])
       setProducts(prods)
       // solo ventas
-      const sales = movs.filter((m) => m.type === 'out')
+      const existing = new Set(prods.map((p) => p.id))
+      const sales = movs.filter((m) => m.type === 'out' && existing.has(m.productId))
       setRows(sales)
     } catch (e) {
       toast.current?.show({ severity: 'error', summary: 'Error', detail: e?.message || 'No se pudieron cargar los datos' })
@@ -52,13 +53,17 @@ export default function Reportes() {
   const filtered = useMemo(() => {
     const [start, end] = filters.range || []
     // normalizar valores de filtros para 'Todos'
-    const productId = filters.productId || ''
-    const saleType = filters.saleType || 'all'
-    const seller = filters.seller || ''
+    const productId = (filters.productId ?? '').toString()
+    const saleType = (filters.saleType ?? 'all').toString()
+    const seller = (filters.seller ?? '').toString()
+
+    // camino rápido: todo seleccionado y sin rango => devolver filas completas
+    if (!productId && saleType === 'all' && !seller && !(start || end)) return rows
+
     return rows.filter((r) => {
-      if (productId && r.productId !== productId) return false
-      if (saleType !== 'all' && r.saleType !== saleType) return false
-      if (seller && r.userEmail !== seller) return false
+      if (productId && String(r.productId) !== productId) return false
+      if (saleType !== 'all' && String(r.saleType) !== saleType) return false
+      if (seller && String(r.userEmail || '') !== seller) return false
       if (start || end) {
         const ts = r.createdAt?.seconds ? r.createdAt.seconds * 1000 : Number(r.createdAt || 0)
         const startMs = start ? new Date(start.getTime()).setHours(0, 0, 0, 0) : null
@@ -158,19 +163,22 @@ export default function Reportes() {
       <div className="grid mb-3 align-items-end">
         <div className="col-12 md:col-4">
           <label className="text-sm">Producto</label>
-          <Dropdown value={filters.productId} options={productOptions} onChange={(e) => setFilters((s) => ({ ...s, productId: e.value }))} placeholder="Todos" filter />
+          <Dropdown value={filters.productId} options={productOptions} onChange={(e) => setFilters((s) => ({ ...s, productId: e.value ?? '' }))} placeholder="Todos" filter showClear />
         </div>
         <div className="col-6 md:col-3">
           <label className="text-sm">Tipo de venta</label>
-          <Dropdown value={filters.saleType} options={saleTypeOptions} onChange={(e) => setFilters((s) => ({ ...s, saleType: e.value }))} />
+          <Dropdown value={filters.saleType} options={saleTypeOptions} onChange={(e) => setFilters((s) => ({ ...s, saleType: e.value ?? 'all' }))} showClear />
         </div>
         <div className="col-6 md:col-3">
           <label className="text-sm">Vendedor</label>
-          <Dropdown value={filters.seller} options={sellerOptions} onChange={(e) => setFilters((s) => ({ ...s, seller: e.value }))} placeholder="Todos" filter />
+          <Dropdown value={filters.seller} options={sellerOptions} onChange={(e) => setFilters((s) => ({ ...s, seller: e.value ?? '' }))} placeholder="Todos" filter showClear />
         </div>
         <div className="col-12 md:col-5">
           <label className="text-sm">Rango de fechas</label>
           <Calendar value={filters.range} onChange={(e) => setFilters((s) => ({ ...s, range: e.value }))} selectionMode="range" readOnlyInput className="w-full" placeholder="Selecciona rango" showIcon dateFormat="dd/mm/yy" />
+        </div>
+        <div className="col-12 md:col-2">
+          <Button type="button" label="Limpiar filtros" icon="pi pi-filter-slash" onClick={() => setFilters({ productId: '', saleType: 'all', seller: '', range: null })} outlined className="w-full md:w-auto" />
         </div>
       </div>
 

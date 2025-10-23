@@ -11,9 +11,10 @@ import { Toast } from "primereact/toast";
 import { ConfirmDialog, confirmDialog } from "primereact/confirmdialog";
 import { listProducts, createProduct, updateProduct, deleteProduct } from "../services/products";
 import { listSuppliers } from "../services/suppliers";
-import { uploadProductImage } from "../services/storage";
+import { uploadProductImage } from "../services/images";
+import { listCategories } from "../services/categories";
 
-const CATEGORIES = ["Piñatas", "Globos", "Disfraces", "Dulces", "Decoración"];
+// categorías vendrán de Firestore
 
 export default function Productos() {
   const toast = useRef(null);
@@ -26,11 +27,12 @@ export default function Productos() {
   const [previewUrl, setPreviewUrl] = useState(null);
   const [saving, setSaving] = useState(false);
   const [suppliers, setSuppliers] = useState([]);
+  const [categories, setCategories] = useState([]);
   const fileInputRef = useRef(null);
 
   const emptyProduct = useMemo(
     () => ({ id: null, name: "", category: "", price: 0, cost: 0, quantity: 0, supplier: "", description: "", imageUrl: "" }),
-    [],
+    []
   );
 
   const load = async () => {
@@ -47,11 +49,12 @@ export default function Productos() {
 
   useEffect(() => {
     load();
-    // cargar proveedores para el selector
+    // cargar proveedores y categorías para los selectores
     (async () => {
       try {
-        const s = await listSuppliers();
+        const [s, c] = await Promise.all([listSuppliers(), listCategories()]);
         setSuppliers(s);
+        setCategories(c.map((x) => x.name).filter(Boolean));
       } catch (e) {
         // opcional: ignorar
       }
@@ -228,12 +231,8 @@ export default function Productos() {
           header="Ganancia"
           sortable
           body={(r) => {
-            const profit = Number(
-              Object.prototype.hasOwnProperty.call(r, 'profit')
-                ? r.profit
-                : Number(r.price || 0) - Number(r.cost || 0),
-            );
-            return new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(profit);
+            const profit = Number(Object.prototype.hasOwnProperty.call(r, "profit") ? r.profit : Number(r.price || 0) - Number(r.cost || 0));
+            return new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP", maximumFractionDigits: 0 }).format(profit);
           }}
         />
         <Column
@@ -256,7 +255,7 @@ export default function Productos() {
         header={editing?.id ? "Editar producto" : "Nuevo producto"}
         visible={dialogVisible}
         onHide={onHide}
-        style={{ width: "520px" }}
+        style={{ width: "820px" }}
         footer={
           <div className="flex justify-content-end gap-2">
             <Button label="Cancelar" severity="secondary" onClick={onHide} outlined />
@@ -295,9 +294,10 @@ export default function Productos() {
                 <label className="text-sm">Categoría</label>
                 <Dropdown
                   value={editing.category}
-                  options={CATEGORIES}
+                  options={categories.map((n) => ({ label: n, value: n }))}
                   onChange={(e) => setEditing((s) => ({ ...s, category: e.value }))}
                   placeholder="Selecciona"
+                  filter
                 />
               </div>
               <div className="formgrid grid">
@@ -329,18 +329,18 @@ export default function Productos() {
               <div className="formgrid grid">
                 <div className="field col">
                   <label className="text-sm">Ganancia</label>
-                  <div className="p-inputtext p-component" style={{ padding: '0.75rem' }}>
-                    {new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(
-                      Math.max(0, Number(editing.price || 0) - Number(editing.cost || 0)),
+                  <div className="p-inputtext p-component" style={{ padding: "0.75rem" }}>
+                    {new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP", maximumFractionDigits: 0 }).format(
+                      Math.max(0, Number(editing.price || 0) - Number(editing.cost || 0))
                     )}
                   </div>
                 </div>
                 <div className="field col">
                   <label className="text-sm">Margen %</label>
-                  <div className="p-inputtext p-component" style={{ padding: '0.75rem' }}>
+                  <div className="p-inputtext p-component" style={{ padding: "0.75rem" }}>
                     {Number(editing.cost || 0)
                       ? `${(((Number(editing.price || 0) - Number(editing.cost || 0)) / Number(editing.cost || 0)) * 100).toFixed(0)}%`
-                      : '—'}
+                      : "—"}
                   </div>
                 </div>
               </div>

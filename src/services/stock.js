@@ -3,7 +3,7 @@ import { collection, addDoc, serverTimestamp, query, orderBy, getDocs, doc, upda
 
 const movementsRef = collection(db, 'stock_movements')
 
-export async function addMovement({ productId, type, units, note, saleType, priceAtSale, total, userId, userEmail, costAtEntry, totalCost }) {
+export async function addMovement({ productId, type, units, note, saleType, priceAtSale, total, userId, userEmail, costAtEntry, totalCost, invoiceId }) {
   const unitsNum = Number(units || 0)
   if (!productId || !unitsNum || !['in', 'out'].includes(type)) {
     throw new Error('Datos de movimiento inválidos')
@@ -45,6 +45,7 @@ export async function addMovement({ productId, type, units, note, saleType, pric
     type,
     units: unitsNum,
     note: note || '',
+    invoiceId: invoiceId || null,
     saleType: isSale ? (saleType === 'mayor' ? 'mayor' : 'detal') : null,
     priceAtSale: isSale ? price : null,
     total: isSale ? movementTotal : null,
