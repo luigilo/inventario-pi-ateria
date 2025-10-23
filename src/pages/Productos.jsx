@@ -84,18 +84,38 @@
     }
     setSaving(true)
     try {
-      let imageUrl = editing.imageUrl || ''
-      if (imageFile) {
-        imageUrl = await uploadProductImage(imageFile, editing.id || 'new')
-      }
-      const payload = { ...editing, imageUrl }
+      // Si es edición
       if (editing.id) {
-        await updateProduct(editing.id, payload)
-        setItems((prev) => prev.map((p) => (p.id === editing.id ? { ...p, ...payload } : p)))
+        let next = { ...editing }
+        if (imageFile) {
+          try {
+            const url = await uploadProductImage(imageFile, editing.id)
+            next.imageUrl = url
+          } catch {
+            toast.current?.show({ severity: 'warn', summary: 'Imagen', detail: 'No se pudo subir la imagen. Se guarda sin cambios de imagen.' })
+          }
+        }
+        await updateProduct(editing.id, { ...next })
+        setItems((prev) => prev.map((p) => (p.id === editing.id ? { ...p, ...next } : p)))
         toast.current?.show({ severity: 'success', summary: 'Actualizado', detail: 'Producto actualizado' })
       } else {
-        const id = await createProduct(payload)
-        setItems((prev) => [{ id, ...payload }, ...prev])
+        // Creación: primero crea el documento sin imageUrl
+        const base = { ...editing }
+        delete base.id
+        // No forzar imageUrl aquí; se añadirá luego
+        const id = await createProduct({ ...base, imageUrl: '' })
+        let final = { id, ...base, imageUrl: '' }
+        // Intentar subir imagen si existe
+        if (imageFile) {
+          try {
+            const url = await uploadProductImage(imageFile, id)
+            await updateProduct(id, { imageUrl: url })
+            final.imageUrl = url
+          } catch {
+            toast.current?.show({ severity: 'warn', summary: 'Imagen', detail: 'Producto creado, pero la imagen no se pudo subir.' })
+          }
+        }
+        setItems((prev) => [final, ...prev])
         toast.current?.show({ severity: 'success', summary: 'Creado', detail: 'Producto creado' })
       }
       setDialogVisible(false)
