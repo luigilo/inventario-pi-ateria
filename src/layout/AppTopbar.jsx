@@ -1,10 +1,10 @@
-import { Link } from 'react-router-dom'
+import { Link } from "react-router-dom";
 
 export default function AppTopbar({ onMenuToggle }) {
   return (
     <div className="layout-topbar">
       <Link to="/" className="layout-topbar-logo">
-        <img src="/logo.svg" alt="logo" />
+        <img src="/vite.svg" alt="logo" />
         <span>Inventario</span>
       </Link>
       <button type="button" className="layout-topbar-button layout-menu-button p-link" onClick={onMenuToggle} aria-label="Menu">
@@ -19,5 +19,5 @@ export default function AppTopbar({ onMenuToggle }) {
         </li>
       </ul>
     </div>
-  )
+  );
 }
