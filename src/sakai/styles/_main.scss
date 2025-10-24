@@ -138,3 +138,41 @@
     margin-bottom: 0;
   }
 }
+.mui-52l1kw {
+  z-index: 2;
+  block-size: auto;
+  max-block-size: 680px;
+  max-inline-size: 100%;
+  margin: 3rem;
+}
+.mui-1cxxf2 {
+  block-size: auto;
+  max-block-size: 355px;
+  inline-size: 100%;
+  position: absolute;
+  inset-block-end: 0;
+}
+.bg-login {
+  background: #25293c;
+  min-block-size: 100dvh;
+  block-size: 100%;
+}
+.bg-content-login {
+  background-color: #2f3349;
+  min-block-size: 100dvh;
+  block-size: 100%;
+  z-index: 9;
+}
+.hidden-mobile {
+  display: none !important;
+}
+@media (min-width: 768px) {
+  .hidden-mobile {
+    display: block !important;
+  } /* o flex */
+}
+@media (max-width: 767px) {
+  .max-width-100 {
+    width: 100% !important;
+  }
+}
