@@ -41,7 +41,7 @@ export default function Login() {
         />
         <img alt="mask" src="https://demos.pixinvent.com/vuexy-nextjs-admin-template/demo-4/images/pages/auth-mask-dark.png" className="mui-1cxxf2" />
       </div>
-      <div className="flex bg-content-login col-4 flex-column align-items-center justify-content-center">
+      <div className="flex max-width-100 bg-content-login col-4 flex-column align-items-center justify-content-center">
         <div className="text-center mb-5">
           <div className="text-50 text-3xl font-medium mb-2">Inventario Piñatería</div>
           <span className="text-50 font-medium">Inicia sesión para continuar</span>
